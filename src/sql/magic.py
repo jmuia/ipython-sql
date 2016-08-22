@@ -86,7 +86,7 @@ class SqlMagic(Magics, Configurable):
         try:
             result = sql.run.run(conn, parsed['sql'], self, user_ns)
 
-            if result and ~isinstance(result, str) and self.column_local_vars:
+            if result is not None and not isinstance(result, str) and self.column_local_vars:
                 #Instead of returning values, set variables directly in the
                 #users namespace. Variable names given by column names
 
@@ -105,7 +105,11 @@ class SqlMagic(Magics, Configurable):
                 return None
             else:
                 #Return results into the default ipython _ variable
-                return result
+                if self.autopandas:
+                    self.shell.user_ns.update({'_': result})
+                    return None
+                else:
+                    return result
 
         except (ProgrammingError, OperationalError) as e:
             # Sqlite apparently return all errors as OperationalError :/
